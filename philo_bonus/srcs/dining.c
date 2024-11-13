@@ -6,7 +6,7 @@
 /*   By: alibaba <alibaba@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/19 20:30:06 by pbailly           #+#    #+#             */
-/*   Updated: 2024/11/13 17:00:18 by alibaba          ###   ########.fr       */
+/*   Updated: 2024/11/13 16:35:29 by alibaba          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,37 +14,27 @@
 
 static void	ft_one_philo(t_data *data, t_philo *philo)
 {
-	pthread_mutex_lock(&data->forks[philo->r_fork]);
+	sem_wait(data->forks);
 	ft_log(data, philo, 'F');
-	pthread_mutex_unlock(&data->forks[philo->r_fork]);
 	ft_usleep(data->t_die, data);
 	ft_log(data, philo, 'D');
+	sem_post(data->forks);
 }
 
 static void	ft_is_eating(t_data *data, t_philo *philo)
 {
-	if (philo->id % 2)
-	{
-		pthread_mutex_lock(&data->forks[philo->l_fork]);
-		ft_log(data, philo, 'F');
-		pthread_mutex_lock(&data->forks[philo->r_fork]);
-		ft_log(data, philo, 'F');
-	}
-	else
-	{
-		pthread_mutex_lock(&data->forks[philo->r_fork]);
-		ft_log(data, philo, 'F');
-		pthread_mutex_lock(&data->forks[philo->l_fork]);
-		ft_log(data, philo, 'F');
-	}
-	pthread_mutex_lock(&data->meal);
+	sem_wait(data->forks);
+	ft_log(data, philo, 'F');
+	sem_wait(data->forks);
+	ft_log(data, philo, 'F');
+	sem_wait(data->meal);
 	philo->t_last_meal = get_time();
 	philo->meals_eaten++;
-	pthread_mutex_unlock(&data->meal);
+	sem_post(data->meal);
 	ft_log(data, philo, 'E');
 	ft_usleep(data->t_eat, data);
-	pthread_mutex_unlock(&data->forks[philo->l_fork]);
-	pthread_mutex_unlock(&data->forks[philo->r_fork]);
+	sem_post(data->forks);
+	sem_post(data->forks);
 }
 
 static void	*routine(void *arg)
@@ -80,14 +70,14 @@ static void	observer(t_data *data, t_philo *philo)
 		i = -1;
 		while (++i < data->n_philo && !ft_is_dead(data))
 		{
-			pthread_mutex_lock(&data->meal);
+			sem_wait(data->meal);
 			if ((get_time() - philo[i].t_last_meal) >= data->t_die)
 			{
 				set_death(data, philo);
-				pthread_mutex_unlock(&data->meal);
+				sem_post(data->meal);
 				return ;
 			}
-			pthread_mutex_unlock(&data->meal);
+			sem_post(data->meal);
 		}
 		i = 0;
 		while (i < data->n_philo && data->n_meal != -1 && meal_counter(data,

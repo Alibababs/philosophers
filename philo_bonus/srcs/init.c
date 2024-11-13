@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   init.c                                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: pbailly <pbailly@student.42.fr>            +#+  +:+       +#+        */
+/*   By: alibaba <alibaba@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/19 14:46:29 by pbailly           #+#    #+#             */
-/*   Updated: 2024/11/12 16:23:02 by pbailly          ###   ########.fr       */
+/*   Updated: 2024/11/13 16:22:25 by alibaba          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,33 +25,22 @@ static int	init_philo(t_data *data)
 		data->philo[i].data = data;
 		data->philo[i].id = i + 1;
 		data->philo[i].meals_eaten = 0;
-		data->philo[i].r_fork = i;
-		data->philo[i].l_fork = (i + 1) % data->n_philo;
 	}
 	return (0);
 }
 
-static int	init_mutex(t_data *data)
+static int	init_sem(t_data *data)
 {
-	int	i;
-
-	data->forks = malloc(sizeof(pthread_mutex_t) * data->n_philo);
-	if (!data->forks)
-		return (write_error("malloc error\n"));
-	i = -1;
-	while (++i < data->n_philo)
-	{
-		if (pthread_mutex_init(&data->forks[i], NULL) != 0)
-			return (write_error("pthread init error"));
-	}
-	if (pthread_mutex_init(&data->write, NULL) != 0)
-		return (write_error("pthread init error"));
-	if (pthread_mutex_init(&data->meal, NULL) != 0)
-		return (write_error("pthread init error"));
-	if (pthread_mutex_init(&data->dead, NULL) != 0)
-		return (write_error("pthread init error"));
-	if (pthread_mutex_init(&data->monitor, NULL) != 0)
-		return (write_error("pthread init error"));
+	sem_unlink("forks");
+	sem_unlink("write");
+	sem_unlink("meal");
+	sem_unlink("dead");
+	sem_unlink("monitor");
+	data->forks = sem_open("forks", O_CREAT, 0600, data->n_philo);
+	data->write = sem_open("write", O_CREAT, 0600, 1);
+	data->meal = sem_open("meal", O_CREAT, 0600, 1);
+	data->dead = sem_open("dead", O_CREAT, 0600, 1);
+	data->monitor = sem_open("monitor", O_CREAT, 0600, 1);
 	return (0);
 }
 
@@ -66,7 +55,7 @@ int	init(char **argv, t_data *data)
 		data->n_meal = ft_atol(argv[5]);
 	data->is_dead = 0;
 	data->is_finished = 0;
-	if (init_mutex(data))
+	if (init_sem(data))
 		return (1);
 	if (init_philo(data))
 		return (1);

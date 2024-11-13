@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   log.c                                              :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: pbailly <pbailly@student.42.fr>            +#+  +:+       +#+        */
+/*   By: alibaba <alibaba@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/19 20:43:27 by pbailly           #+#    #+#             */
-/*   Updated: 2024/10/31 17:46:29 by pbailly          ###   ########.fr       */
+/*   Updated: 2024/11/13 16:10:12 by alibaba          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,7 +16,7 @@ void	ft_log(t_data *data, t_philo *philo, char c)
 {
 	long	time;
 
-	pthread_mutex_lock(&data->write);
+	sem_wait(data->write);
 	time = get_time() - data->start;
 	if (!ft_is_finished(data))
 	{
@@ -39,5 +39,5 @@ void	ft_log(t_data *data, t_philo *philo, char c)
 					time + data->t_eat);
 		}
 	}
-	pthread_mutex_unlock(&data->write);
+	sem_post(data->write);
 }
